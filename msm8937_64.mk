@@ -13,9 +13,9 @@ endif
 # Retain the earlier default behavior i.e. ota config (dynamic partition was disabled if not set explicitly), so set
 # SHIPPING_API_LEVEL to 28 if it was not set earlier (this is generally set earlier via build.sh per-target)
 ifeq ($(TARGET_KERNEL_VERSION), 4.9)
-SHIPPING_API_LEVEL := 28
+  SHIPPING_API_LEVEL := 28
 else
-SHIPPING_API_LEVEL := 29
+  SHIPPING_API_LEVEL := 29
 endif
 
 #### Turning BOARD_DYNAMIC_PARTITION_ENABLE flag to TRUE will enable dynamic partition/super image creation.
@@ -24,10 +24,48 @@ ifeq (true,$(call math_gt_or_eq,$(SHIPPING_API_LEVEL),29))
   ENABLE_AB ?= true
   BOARD_DYNAMIC_PARTITION_ENABLE ?= true
   PRODUCT_SHIPPING_API_LEVEL := $(SHIPPING_API_LEVEL)
+
+  #Enable Light AIDL HAL
+  PRODUCT_PACKAGES += android.hardware.lights-service.qti
+  #Display/Graphics
+  PRODUCT_PACKAGES += \
+  vendor.qti.hardware.display.allocator-service \
+  android.hardware.graphics.mapper@3.0-impl-qti-display \
+  android.hardware.graphics.mapper@4.0-impl-qti-display
 else
   ENABLE_AB ?= false
   BOARD_DYNAMIC_PARTITION_ENABLE ?= false
   $(call inherit-product, build/make/target/product/product_launched_with_p.mk)
+
+  #Enable Light HIDL HAL
+  PRODUCT_PACKAGES += \
+  android.hardware.light@2.0-impl \
+  android.hardware.light@2.0-service
+  #Display/Graphics
+  PRODUCT_PACKAGES += \
+  android.hardware.graphics.allocator@2.0-impl \
+  android.hardware.graphics.allocator@2.0-service \
+  android.hardware.graphics.mapper@2.0-impl-2.1
+endif
+
+ifeq (true,$(call math_gt_or_eq,$(SHIPPING_API_LEVEL),29))
+ # f2fs utilities
+ PRODUCT_PACKAGES += \
+     sg_write_buffer \
+     f2fs_io \
+     check_f2fs
+
+ # Userdata checkpoint
+ PRODUCT_PACKAGES += \
+     checkpoint_gc
+
+ ifeq ($(ENABLE_AB), true)
+ AB_OTA_POSTINSTALL_CONFIG += \
+     RUN_POSTINSTALL_vendor=true \
+     POSTINSTALL_PATH_vendor=bin/checkpoint_gc \
+     FILESYSTEM_TYPE_vendor=ext4 \
+     POSTINSTALL_OPTIONAL_vendor=true
+ endif
 endif
 
 ifeq ($(strip $(BOARD_DYNAMIC_PARTITION_ENABLE)),true)
@@ -173,6 +211,13 @@ DEVICE_MANIFEST_FILE := device/qcom/msm8937_64/manifest.xml
 ifeq ($(ENABLE_AB), true)
 DEVICE_MANIFEST_FILE += device/qcom/msm8937_64/manifest_ab.xml
 endif
+
+ifeq ($(SHIPPING_API_LEVEL),29)
+    DEVICE_MANIFEST_FILE += device/qcom/msm8937_64/manifest_target_level_4.xml
+else
+    DEVICE_MANIFEST_FILE += device/qcom/msm8937_64/manifest_target_level_3.xml
+endif
+
 DEVICE_MATRIX_FILE   := device/qcom/common/compatibility_matrix.xml
 DEVICE_FRAMEWORK_MANIFEST_FILE := device/qcom/msm8937_64/framework_manifest.xml
 DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE := \
@@ -240,16 +285,10 @@ PRODUCT_PACKAGES += android.hardware.media.omx@1.0-impl
 
 # Display/Graphics
  PRODUCT_PACKAGES += \
-     android.hardware.graphics.allocator@2.0-impl \
-     android.hardware.graphics.allocator@2.0-service \
-     android.hardware.graphics.mapper@2.0-impl \
      android.hardware.graphics.composer@2.1-impl \
      android.hardware.graphics.composer@2.1-service \
      android.hardware.memtrack@1.0-impl \
-     android.hardware.memtrack@1.0-service \
-     android.hardware.light@2.0-impl \
-     android.hardware.light@2.0-service \
-     android.hardware.configstore@1.0-service
+     android.hardware.memtrack@1.0-service
 
 PRODUCT_PACKAGES += wcnss_service
 
@@ -344,8 +383,6 @@ PRODUCT_PACKAGES += \
     libandroid_net \
     libandroid_net_32
 
-#Enable Lights Impl HAL Compilation
-PRODUCT_PACKAGES += android.hardware.light@2.0-impl
 
 TARGET_SUPPORT_SOTER := true
 

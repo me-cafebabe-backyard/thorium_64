@@ -108,6 +108,10 @@ BOOTLOADER_PLATFORM := msm8952 # use msm8937 LK configuration
 MALLOC_SVELTE := true
 
 TARGET_USERIMAGES_USE_EXT4 := true
+ifeq ($(TARGET_KERNEL_VERSION), 4.19)
+  TARGET_USERIMAGES_USE_F2FS := true
+  BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := f2fs
+endif
 BOARD_BOOTIMAGE_PARTITION_SIZE := 0x04000000
 
 ifeq ($(ENABLE_AB),true)
@@ -116,10 +120,10 @@ AB_OTA_UPDATER := true
 # Full A/B partiton update set
 #   AB_OTA_PARTITIONS := xbl rpm tz hyp pmic modem abl boot keymaster cmnlib cmnlib64 system bluetooth
 # Subset A/B partitions for Android-only image update
-    ifeq ($(ENABLE_VENDOR_IMAGE), true)
-      AB_OTA_PARTITIONS ?= boot system vendor
+    ifeq ($(strip $(BOARD_DYNAMIC_PARTITION_ENABLE)),true)
+      AB_OTA_PARTITIONS ?= boot system vendor product vbmeta_system
     else
-      AB_OTA_PARTITIONS ?= boot system
+      AB_OTA_PARTITIONS ?= boot system vendor
     endif
 else
 BOARD_CACHEIMAGE_PARTITION_SIZE := 268435456
@@ -203,6 +207,12 @@ TARGET_USES_GRALLOC1 := true
 TARGET_USES_COLOR_METADATA := true
 TARGET_NO_RPC := true
 
+ifeq (true,$(call math_gt_or_eq,$(SHIPPING_API_LEVEL),29))
+TARGET_USES_QTI_MAPPER_2_0 := true
+TARGET_USES_QTI_MAPPER_EXTENSIONS_1_1 := true
+TARGET_USES_GRALLOC4 := true
+endif
+
 BOARD_VENDOR_KERNEL_MODULES := \
     $(KERNEL_MODULES_OUT)/audio_apr.ko \
     $(KERNEL_MODULES_OUT)/pronto_wlan.ko \
@@ -233,7 +243,7 @@ BOARD_VENDOR_KERNEL_MODULES := \
 ifeq ($(strip $(TARGET_KERNEL_VERSION)), 4.9)
     BOARD_KERNEL_CMDLINE := console=ttyMSM0,115200,n8 androidboot.console=ttyMSM0 androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 androidboot.bootdevice=7824900.sdhci earlycon=msm_serial_dm,0x78B0000 androidboot.usbconfigfs=true loop.max_part=7
 else ifeq ($(strip $(TARGET_KERNEL_VERSION)), 4.19)
-    BOARD_KERNEL_CMDLINE := console=ttyMSM0,115200,n8 androidboot.console=ttyMSM0 androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 androidboot.bootdevice=7824900.sdhci earlycon=msm_serial_dm,0x78B0000 androidboot.usbconfigfs=true loop.max_part=7
+    BOARD_KERNEL_CMDLINE := console=ttyMSM0,115200,n8 androidboot.console=ttyMSM0 androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 androidboot.bootdevice=7824900.sdhci earlycon=msm_hsl_uart,0x78B0000 androidboot.usbconfigfs=true loop.max_part=7
 endif
 #BOARD_KERNEL_SEPARATED_DT := true
 
