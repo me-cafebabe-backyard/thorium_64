@@ -30,9 +30,16 @@ else
   TARGET_COPY_OUT_PRODUCT := product
   BOARD_USES_PRODUCTIMAGE := true
   BOARD_PRODUCTIMAGE_FILE_SYSTEM_TYPE := ext4
+  # System_ext support
+  TARGET_COPY_OUT_SYSTEM_EXT := system_ext
+  BOARD_SYSTEM_EXTIMAGE_FILE_SYSTEM_TYPE := ext4
   # Define the Dynamic Partition sizes and groups.
   ifeq ($(ENABLE_AB), true)
-    BOARD_SUPER_PARTITION_SIZE := 12884901888
+      ifeq ($(ENABLE_VIRTUAL_AB), true)
+          BOARD_SUPER_PARTITION_SIZE := 5318967296
+      else
+          BOARD_SUPER_PARTITION_SIZE := 12884901888
+      endif
   else
     BOARD_SUPER_PARTITION_SIZE := 5318967296
   endif
@@ -42,7 +49,7 @@ else
   endif
   BOARD_SUPER_PARTITION_GROUPS := qti_dynamic_partitions
   BOARD_QTI_DYNAMIC_PARTITIONS_SIZE := 5314772992
-  BOARD_QTI_DYNAMIC_PARTITIONS_PARTITION_LIST := system product vendor
+  BOARD_QTI_DYNAMIC_PARTITIONS_PARTITION_LIST := system product vendor system_ext
   BOARD_EXT4_SHARE_DUP_BLOCKS := true
   BOARD_RECOVERYIMAGE_PARTITION_SIZE := 67108864
   # Metadata partition (applicable only for new launches)
@@ -67,8 +74,6 @@ TARGET_BOARD_PLATFORM := msm8937
 TARGET_BOOTLOADER_BOARD_NAME := QC_Reference_Phone
 
 TARGET_COMPILE_WITH_MSM_KERNEL := true
-#Enable appended dtb.
-TARGET_KERNEL_APPEND_DTB := true
 BOARD_USES_GENERIC_AUDIO := true
 BOARD_DO_NOT_STRIP_VENDOR_MODULES := true
 
@@ -121,7 +126,7 @@ AB_OTA_UPDATER := true
 #   AB_OTA_PARTITIONS := xbl rpm tz hyp pmic modem abl boot keymaster cmnlib cmnlib64 system bluetooth
 # Subset A/B partitions for Android-only image update
     ifeq ($(strip $(BOARD_DYNAMIC_PARTITION_ENABLE)),true)
-      AB_OTA_PARTITIONS ?= boot system vendor product vbmeta_system
+      AB_OTA_PARTITIONS ?= boot system vendor product vbmeta_system system_ext
     else
       AB_OTA_PARTITIONS ?= boot system vendor
     endif
@@ -176,7 +181,11 @@ else ifeq ($(TARGET_KERNEL_VERSION), 4.9)
     endif
 endif
 
-BOARD_USERDATAIMAGE_PARTITION_SIZE := 1971322880
+ifeq ($(ENABLE_VIRTUAL_AB), true)
+     BOARD_USERDATAIMAGE_PARTITION_SIZE := 8589934592
+else
+     BOARD_USERDATAIMAGE_PARTITION_SIZE := 1971322880
+endif
 BOARD_PERSISTIMAGE_PARTITION_SIZE := 33554432
 BOARD_PERSISTIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_OEMIMAGE_PARTITION_SIZE := 268435456
@@ -318,7 +327,13 @@ PMIC_QG_SUPPORT := true
 
 TARGET_ENABLE_MEDIADRM_64 := true
 
-ifeq ($(BOARD_KERNEL_SEPARATED_DTBO), true)
+#TARGET_KERNEL_APPEND_DTB handling
+ifeq ($(strip $(BOARD_DYNAMIC_PARTITION_ENABLE)),true)
+TARGET_KERNEL_APPEND_DTB := false
+else
+TARGET_KERNEL_APPEND_DTB := true
+endif
+
 # Set Header version for bootimage
 ifneq ($(strip $(TARGET_KERNEL_APPEND_DTB)),true)
 #Enable dtb in boot image and Set Header version
@@ -327,9 +342,7 @@ BOARD_BOOTIMG_HEADER_VERSION := 2
 else
 BOARD_BOOTIMG_HEADER_VERSION := 1
 endif
-
 BOARD_MKBOOTIMG_ARGS := --header_version $(BOARD_BOOTIMG_HEADER_VERSION)
-endif
 
 #################################################################################
 # This is the End of BoardConfig.mk file.
