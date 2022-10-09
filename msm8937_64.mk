@@ -2,12 +2,12 @@ ALLOW_MISSING_DEPENDENCIES=true
 
 ifneq ($(wildcard kernel/msm-4.19),)
     TARGET_KERNEL_VERSION := 4.19
-    $(warning "Build with 4.19 kernel.")
+    $(error "Build with 4.19 kernel.")
 else ifneq ($(wildcard kernel/msm-4.9),)
     TARGET_KERNEL_VERSION := 4.9
     $(warning "Build with 4.9 kernel")
 else
-    $(warning "Unknown kernel")
+    $(error "Unknown kernel")
 endif
 
 # Retain the earlier default behavior i.e. ota config (dynamic partition was disabled if not set explicitly), so set
@@ -39,9 +39,9 @@ ifeq (true,$(call math_gt_or_eq,$(SHIPPING_API_LEVEL),29))
   android.hardware.graphics.mapper@3.0-impl-qti-display \
   android.hardware.graphics.mapper@4.0-impl-qti-display
 else
-  ENABLE_AB ?= false
+  ENABLE_AB := false
   ENABLE_VIRTUAL_AB := false
-  BOARD_DYNAMIC_PARTITION_ENABLE ?= false
+  BOARD_DYNAMIC_PARTITION_ENABLE := false
   $(call inherit-product, build/make/target/product/product_launched_with_p.mk)
 
   #Enable Light HIDL HAL
@@ -101,7 +101,7 @@ PRODUCT_PACKAGES += android.hardware.fastboot@1.0-impl-mock
 endif
 
 # Enable AVB 2.0
-BOARD_AVB_ENABLE := true
+BOARD_AVB_ENABLE := false
 ifeq ($(ENABLE_VIRTUAL_AB), true)
   $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota.mk)
 endif
