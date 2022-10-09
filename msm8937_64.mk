@@ -1,5 +1,7 @@
 ALLOW_MISSING_DEPENDENCIES=true
 
+PRODUCT_ENFORCE_RRO_TARGETS := *
+
 ifneq ($(wildcard kernel/msm-4.19),)
     TARGET_KERNEL_VERSION := 4.19
     $(error "Build with 4.19 kernel.")
