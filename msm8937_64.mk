@@ -6,10 +6,10 @@ USE_CAMERA_STUB := true
 
 ifneq ($(wildcard kernel/msm-4.19),)
     TARGET_KERNEL_VERSION := 4.19
-    $(error "Build with 4.19 kernel.")
+    $(warning "Build with 4.19 kernel.")
 else ifneq ($(wildcard kernel/msm-4.9),)
     TARGET_KERNEL_VERSION := 4.9
-    $(warning "Build with 4.9 kernel")
+    $(error "Build with 4.9 kernel")
 else
     $(error "Unknown kernel")
 endif
@@ -30,10 +30,10 @@ endif
 #### Turning BOARD_DYNAMIC_PARTITION_ENABLE flag to TRUE will enable dynamic partition/super image creation.
 # Enable Dynamic partitions only for Q new launch devices and beyond.
 ifeq (true,$(call math_gt_or_eq,$(SHIPPING_API_LEVEL),29))
-  ENABLE_AB ?= true
+  ENABLE_AB := false
   # Enable virtual-ab by default
-  ENABLE_VIRTUAL_AB := true
-  BOARD_DYNAMIC_PARTITION_ENABLE ?= true
+  ENABLE_VIRTUAL_AB := false
+  BOARD_DYNAMIC_PARTITION_ENABLE := false
   PRODUCT_SHIPPING_API_LEVEL := $(SHIPPING_API_LEVEL)
   #Enable Light AIDL HAL
   PRODUCT_PACKAGES += android.hardware.lights-service.qti
